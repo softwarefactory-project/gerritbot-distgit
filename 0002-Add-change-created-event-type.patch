@@ -1,0 +1,88 @@
+From fd59f1c0f3c4426ab0b05924b9a692bc9d45460f Mon Sep 17 00:00:00 2001
+From: Tristan Cacqueray <tdecacqu@redhat.com>
+Date: Mon, 29 Feb 2016 21:37:52 -0500
+Subject: [PATCH 2/2] Add change-created event type
+
+Note that change-created events are in fact the first patchset-created
+event, so the patchset-created filter also set changeset-created.
+
+Change-Id: I1e1a99fa0c5f53fe3b16117279782015bdb02959
+---
+ doc/source/installation.rst |  1 +
+ gerritbot/bot.py            | 20 ++++++++++++++++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/doc/source/installation.rst b/doc/source/installation.rst
+index 6a23604..989e625 100644
+--- a/doc/source/installation.rst
++++ b/doc/source/installation.rst
+@@ -33,6 +33,7 @@ like::
+ 
+   example-channel1:
+       events:
++        - change-created
+         - patchset-created
+         - change-merged
+       projects:
+diff --git a/gerritbot/bot.py b/gerritbot/bot.py
+index 25d0e03..927448a 100755
+--- a/gerritbot/bot.py
++++ b/gerritbot/bot.py
+@@ -45,6 +45,7 @@ websocket=False
+ openstack-dev:
+     events:
+       - patchset-created
++      - change-created
+       - change-merged
+     projects:
+       - openstack/nova
+@@ -191,6 +192,16 @@ class Gerrit(threading.Thread):
+                 return username
+         return "UNKNOWN USER"
+ 
++    def change_created(self, channel, data):
++        msg = '%s created %s %s: %s  %s' % (
++            self._get_username(data['patchSet']),
++            data['change']['project'],
++            data['change']['branch'],
++            data['change']['subject'],
++            data['change']['url'])
++        self.log.info('Compiled Message %s: %s' % (channel, msg))
++        self.ircbot.send(channel, msg)
++
+     def patchset_created(self, channel, data):
+         msg = '%s proposed %s %s: %s  %s' % (
+             self._get_username(data['patchSet']),
+@@ -278,6 +289,9 @@ class Gerrit(threading.Thread):
+             if data['type'] == 'ref-updated':
+                 channel_set = self.channel_config.events.get('ref-updated')
+             else:
++                if (data['type'] == 'patchset-created' and
++                        data.get('patchSet', {}).get('number') == '1'):
++                    data['type'] = 'change-created'
+                 channel_set = (self.channel_config.projects.get(
+                     data['change']['project'], set()) &
+                     self.channel_config.events.get(
+@@ -295,6 +309,8 @@ class Gerrit(threading.Thread):
+         for channel in channel_set:
+             if data['type'] == 'comment-added':
+                 self.comment_added(channel, data)
++            elif data['type'] == 'change-created':
++                self.change_created(channel, data)
+             elif data['type'] == 'patchset-created':
+                 self.patchset_created(channel, data)
+             elif data['type'] == 'change-merged':
+@@ -382,6 +398,10 @@ class ChannelConfig(object):
+         self.events = {}
+         self.branches = {}
+         for channel, val in iter(self.data.items()):
++            # patchset-created implies change-created
++            if ('patchset-created' in val['events'] and
++                    'change-created' not in val['events']):
++                val['events'].append('change-created')
+             for event in val['events']:
+                 event_set = self.events.get(event, set())
+                 event_set.add(channel)
+-- 
+2.10.2
+
