@@ -3,7 +3,7 @@
 
 Name:           gerritbot
 Version:        0.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        %{sum}
 
 
@@ -96,5 +96,8 @@ exit 0
 
 
 %changelog
+* Thu Apr 27 2017 Fabien Boucher <fboucher@redhat.com> - 0.3.0-2
+- Set the right service identity Gerritbot
+
 * Thu Mar 16 2017 Tristan Cacqueray - 0.3.0-1
 - Initial packaging
