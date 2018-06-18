@@ -1,9 +1,9 @@
-%global commit  033a83b870dcd2f31d557f514b31e60a073b4945
+%global commit  f32d742effb74d8e5f81673247411189aa7308e2
 %global sum     Gerritbot is an IRC bot that will notify IRC channels of Gerrit events.
 
 Name:           gerritbot
-Version:        0.3.0
-Release:        2%{?dist}
+Version:        0.4.0
+Release:        1%{?dist}
 Summary:        %{sum}
 
 
@@ -16,8 +16,7 @@ Source10:       logging.conf
 Source11:       gerritbot.conf
 Source12:       channels.yaml
 
-Patch0:         0001-Add-_get_username-method-to-discover-username.patch
-Patch1:         0002-Add-change-created-event-type.patch
+Patch1:         0001-Add-change-created-event-type.patch
 
 BuildArch:      noarch
 
@@ -96,6 +95,9 @@ exit 0
 
 
 %changelog
+* Mon Jun 18 2017 Tristan Cacqueray <tdecacqu@redhat.com> - 0.4.0-1
+- Bump version
+
 * Thu Apr 27 2017 Fabien Boucher <fboucher@redhat.com> - 0.3.0-2
 - Set the right service identity Gerritbot
 
