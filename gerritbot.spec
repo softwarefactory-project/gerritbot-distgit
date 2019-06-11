@@ -3,7 +3,7 @@
 
 Name:           gerritbot
 Version:        0.4.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        %{sum}
 
 
@@ -17,6 +17,7 @@ Source11:       gerritbot.conf
 Source12:       channels.yaml
 
 Patch1:         0001-Add-change-created-event-type.patch
+Patch2:         0001-Support-missing-daemon-lib.patch
 
 BuildArch:      noarch
 
@@ -24,7 +25,6 @@ Requires:       python-pbr
 Requires:       python2-gerritlib
 Requires:       python2-irc
 Requires:       PyYAML
-Requires:       python-daemon
 Requires:       python-paho-mqtt
 
 BuildRequires:  python2-devel
@@ -95,6 +95,9 @@ exit 0
 
 
 %changelog
+* Tue Jun 11 2019 Tristan Cacqueray <tdecacqu@redhat.com> - 0.4.0-2
+- Drop python-daemon requirement
+
 * Mon Jun 18 2017 Tristan Cacqueray <tdecacqu@redhat.com> - 0.4.0-1
 - Bump version
 
