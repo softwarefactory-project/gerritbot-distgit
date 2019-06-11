@@ -1,0 +1,68 @@
+From 337df95435dcd6dc43ea81ebcadb08b845905eae Mon Sep 17 00:00:00 2001
+From: Tristan Cacqueray <tdecacqu@redhat.com>
+Date: Tue, 11 Jun 2019 01:08:36 +0000
+Subject: [PATCH] Support missing daemon lib
+
+When running gerritbot in a systemd service, it doesn't need the daemon
+library. This change makes gerritbot works without the daemon library.
+
+Change-Id: Icfabfcb0666863c636738b8b174615cf34d37277
+---
+ gerritbot/bot.py | 25 +++++++++++++++++--------
+ 1 file changed, 17 insertions(+), 8 deletions(-)
+
+diff --git a/gerritbot/bot.py b/gerritbot/bot.py
+index fc38ac0..5796a19 100755
+--- a/gerritbot/bot.py
++++ b/gerritbot/bot.py
+@@ -56,7 +56,6 @@ openstack-dev:
+ """
+ 
+ import ConfigParser
+-import daemon
+ import irc.bot
+ import json
+ import logging.config
+@@ -71,13 +70,17 @@ import yaml
+ import paho.mqtt.client as mqtt
+ 
+ try:
++    import daemon
+     import daemon.pidlockfile
+     pid_file_module = daemon.pidlockfile
+-except Exception:
+-    # as of python-daemon 1.6 it doesn't bundle pidlockfile anymore
+-    # instead it depends on lockfile-0.9.1
+-    import daemon.pidfile
+-    pid_file_module = daemon.pidfile
++except ImportError:
++    try:
++        # as of python-daemon 1.6 it doesn't bundle pidlockfile anymore
++        # instead it depends on lockfile-0.9.1
++        import daemon.pidfile
++        pid_file_module = daemon.pidfile
++    except ImportError:
++        pid_file_module = None
+ 
+ 
+ # https://bitbucket.org/jaraco/irc/issue/34/
+@@ -500,8 +503,14 @@ def main():
+     else:
+         pid_path = "/var/run/gerritbot/gerritbot.pid"
+ 
+-    pid = pid_file_module.TimeoutPIDLockFile(pid_path, 10)
+-    with daemon.DaemonContext(pidfile=pid):
++    if pid_file_module and pid_path:
++        pid = pid_file_module.TimeoutPIDLockFile(pid_path, 10)
++        with daemon.DaemonContext(pidfile=pid):
++            _main(config)
++    else:
++        if pid_path:
++            logging.warning(
++                "Install the daemon library to write to %s", pid_path)
+         _main(config)
+ 
+ 
+-- 
+2.21.0
+
